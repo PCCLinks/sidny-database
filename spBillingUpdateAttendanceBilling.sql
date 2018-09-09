@@ -48,7 +48,7 @@ BEGIN
 		bsi.LargePercent = tmp.LargePercent,
         bsi.DateLastUpdated = now(),
         bsi.LastUpdatedBy = paramCreatedBy
-	where bsi.Scenario <> tmp.billingScenarioName
+	where (bsi.Scenario <> tmp.billingScenarioName or bsi.Scenario is null)
 		or bsi.IndPercent <> tmp.IndPercent
 		or bsi.SmallPercent <> tmp.SmallPercent
 		or bsi.InterPercent <> tmp.InterPercent

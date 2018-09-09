@@ -260,6 +260,7 @@ BEGIN
         ,dataPrev.exitDate PrevExitDate
 	FROM sptmp_EnrollExit2 data
 		left outer join sptmp_EnrollExit2Next dataPrev on data.contactId = dataPrev.contactId
+			and data.ProgramDetail= dataPrev.ProgramDetail
 			and data.ID-1 = dataPrev.ID
 	where data.enrolledDate = dataPrev.enrolledDate) data
 		on sptmp_EnrollExit.contactId = data.contactId
@@ -356,5 +357,5 @@ BEGIN
 
 	CREATE INDEX idx_sptmp_EnrollExit_contact on sptmp_EnrollExit(contactId);
 	CREATE INDEX idx_sptmp_CurrentEnrollExit_contact on sptmp_CurrentEnrollExit(contactId);
-END$$
+END//
 DELIMITER ;
