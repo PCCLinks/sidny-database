@@ -1,5 +1,7 @@
-DELIMITER $$
-CREATE DEFINER=`root`@`10.14.%` FUNCTION `fnGetBillingStatus`(paramBillingStudentId INT(11)) RETURNS varchar(25) CHARSET latin1
+DELIMITER //
+DROP FUNCTION IF EXISTS fnGetBillingStatus;
+//
+CREATE FUNCTION fnGetBillingStatus(paramBillingStudentId INT(11)) RETURNS varchar(25)
 BEGIN
 	DECLARE paramIncludeFlag tinyint(4);
     DECLARE paramType varchar(10);
@@ -23,8 +25,10 @@ BEGIN
     
     IF paramPIDM IS NULL THEN
 		set paramStatus = 'Missing Banner Attribute';
-	ELSEIF paramIncludeFlag = 0 THEN
-		set paramStatus = 'Not Included in Billing';
+	ELSEIF paramIncludeFlag = 0 and paramClosedDate IS NOT NULL THEN
+		set paramStatus = 'Excluded';
+	ELSEIF paramIncludeFlag = 0 and paramClosedDate IS NULL THEN
+		set paramStatus = 'Excluded from Billing';
 	ELSEIF paramClosedDate IS NOT NULL THEN
 		SET paramStatus = 'Billed';
 	ELSE
@@ -40,5 +44,5 @@ BEGIN
     
     RETURN paramStatus;
     
-END$$
+END//
 DELIMITER ;

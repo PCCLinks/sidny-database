@@ -51,7 +51,7 @@ BEGIN
         ,program
         ,schoolDistrict
         ,MIN(billingStartDate) entryDate
-        ,exitdate 
+        ,exitDateGroupBy 
 		,SUM(ROUND(IFNULL(case when month(billingStartDate) = 6 then billedAmount end,0),1)) Jun
 		,SUM(ROUND(IFNULL(case when month(billingStartDate) = 7 then billedAmount end,0),1)) Jul
 		,SUM(ROUND(IFNULL(case when month(billingStartDate) = 8 then billedAmount end,0),1)) Aug
@@ -70,6 +70,7 @@ BEGIN
         ,paramCreatedBy
 	from ( select bsp.firstname, bsp.lastname, bs.bannerGNumber, bs.contactId
 			,bs.billingStudentId, bs.billingStartDate, bs.ExitDate
+            ,(select min(exitDate) from billingStudent where billingStartDate >= bs.billingStartDate and bannerGNumber = bs.bannerGNumber) exitDateGroupBy
 			,bs.billingEndDate, bs.enrolledDate
 			,COALESCE(bs.adjustedDaysPerMonth,bs.maxDaysPerMonth) Enrollment, sd.schooldistrict, program
 			,bs.GeneratedBilledAmount BilledAmount
@@ -82,7 +83,7 @@ BEGIN
             and includeFlag = 1
             and GeneratedBilledAmount != 0
 		) data
-	group by lastname, firstname, bannerGNumber, exitDate, schooldistrict, program
+	group by lastname, firstname, bannerGNumber, exitDateGroupBy, schooldistrict, program
 	order by lastname, firstname;
             
 	UPDATE billingCycle

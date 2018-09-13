@@ -65,7 +65,7 @@ BEGIN
 	where Program like '%attendance%'
 		and billingStartDate = paramBillingStartDate
         and (contactId = paramContactId or paramContactId = 0)
-        and maxDaysPerBillingPeriod <> paramMaxDaysPerBillingPeriod;
+        and (maxDaysPerBillingPeriod <> paramMaxDaysPerBillingPeriod or  maxDaysPerBillingPeriod is null);
             
 	#updateMaxDaysPerMonth
 	update billingStudent
@@ -81,7 +81,7 @@ BEGIN
 	set billingStudent.maxDaysPerMonth = bsMonth.maxDaysPerMonth,
 		billingStudent.DateLastUpdated = now(),
         billingStudent.LastUpdatedBy = paramCreatedBy
-	where billingStudent.maxDaysPerMonth <> bsMonth.maxDaysPerMonth;
+	where (billingStudent.maxDaysPerMonth <> bsMonth.maxDaysPerMonth or billingStudent.maxDaysPerMonth is null);
 
 	DROP TEMPORARY TABLE IF EXISTS sptmp_billingStudent;
 	CREATE TEMPORARY TABLE sptmp_billingStudent AS
@@ -138,12 +138,12 @@ BEGIN
 		billingStudent.AdjustedIndHours = finalData.AdjustedIndHours,
 		billingStudent.DateLastUpdated = now(),
         billingStudent.LastUpdatedBy = paramCreatedBy
-	where billingStudent.GeneratedBilledAmount <> finalData.GeneratedBilledAmount
-		or billingStudent.GeneratedOverageAmount <> finalData.GeneratedOverageAmount
-		or billingStudent.SmGroupPercent <> finalData.SmGroupPercent
-		or billingStudent.InterGroupPercent <> finalData.InterGroupPercent
-		or billingStudent.LargeGroupPercent <> finalData.LargeGroupPercent
-		or billingStudent.CMPercent <> finalData.CMPercent
-		or billingStudent.AdjustedIndHours <> finalData.AdjustedIndHours;
+	where (billingStudent.GeneratedBilledAmount <> finalData.GeneratedBilledAmount or billingStudent.GeneratedBilledAmount is null)
+		or (billingStudent.GeneratedOverageAmount <> finalData.GeneratedOverageAmount or billingStudent.GeneratedOverageAmount is null)
+		or (billingStudent.SmGroupPercent <> finalData.SmGroupPercent or billingStudent.SmGroupPercent is null)
+		or (billingStudent.InterGroupPercent <> finalData.InterGroupPercent or billingStudent.InterGroupPercent is null)
+		or (billingStudent.LargeGroupPercent <> finalData.LargeGroupPercent or billingStudent.LargeGroupPercent is null)
+		or (billingStudent.CMPercent <> finalData.CMPercent or  billingStudent.CMPercent is null)
+		or (billingStudent.AdjustedIndHours <> finalData.AdjustedIndHours or billingStudent.AdjustedIndHours is null);
 END
 //

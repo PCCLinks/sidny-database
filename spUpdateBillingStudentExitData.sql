@@ -61,6 +61,7 @@ BEGIN
         ,bs.billingStudentExitReasonCode
         ,sidnyEnrollCurrent.secondaryReason SidnySecondaryReason
         ,IF(length(sidnyEnrollCurrent.exitNote)=0,substring_index(maxComment,'|',-1),sidnyEnrollCurrent.exitNote) SidnyExitNote
+		,date_Format(bs.billingEndDate,'%Y-%m-%d') billingEndDate
  	from billingStudent bs
 		join (select contactId, max(billingStudentId) maxBillingStudentId from billingStudent maxBSSub WHERE IncludeFlag = 1 GROUP BY contactID) maxBS on bs.billingStudentId = maxBS.maxBillingStudentId
 		join billingStudentProfile bsp on bs.contactid = bsp.contactId
