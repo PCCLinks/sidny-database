@@ -140,7 +140,7 @@ BEGIN
         ,IFNULL(ytc.YtCExitStatusID, data.ExitStatusID) ExitStatusID
 	FROM sptmp_EnrollMinExit1 data
 		left outer join sptmp_YtcEnrollMinExit2 ytc on data.contactid = ytc.contactid
-			and (data.exitDate = ytc.exitDate or (data.exitDate is null and ytc.exitDate is null and data.Program = 'YtC'))
+			and ((data.exitDate = ytc.exitDate and data.program = ytc.program) or (data.exitDate is null and ytc.exitDate is null and data.Program = 'YtC'))
 		left outer join keyStatus on ytc.keyStatusID = keyStatus.keyStatusID;
         
 	#second pass pulls in where the ytc enrollment does not have a general type matching enrollment match

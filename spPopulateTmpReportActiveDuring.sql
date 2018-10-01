@@ -41,6 +41,7 @@ BEGIN
 		, date_format(tmpEnrollExit.enrolledDate,'%Y-%m-%d') as 'Last Enroll in Timeframe' 
 		, date_format(tmpEnrollExit.exitDate,'%Y-%m-%d') as 'Last Exit in Timeframe'
 		, tmpEnrollExit.ProgramDetail 'Program During Timeframe'
+        , tmpEnrollExit.Coach 'Coach During Timeframe'
 		, tmpCurrentEnrollExit.CurrentStatus 'Current Status'
 		, date_format(tmpCurrentEnrollExit.enrolledDate,'%Y-%m-%d') as 'Current Enroll Date' 
 		, date_format(tmpCurrentEnrollExit.exitDate,'%Y-%m-%d') as 'Current Exit Date' 
@@ -51,5 +52,5 @@ BEGIN
         join sptmp_CurrentEnrollExit tmpCurrentEnrollExit 
 			on contact.contactID = tmpCurrentEnrollExit.contactID;
 
-END$$
+END//
 DELIMITER ;
