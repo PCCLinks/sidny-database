@@ -87,11 +87,12 @@ BEGIN
 	CREATE TEMPORARY TABLE sptmp_billingStudent AS
 	select billingStudentId
 		,maxDaysPerMonth
+        ,AdjustedDaysPerMonth
 		,sum(ind) + sum(small)*paramSmGroupPercent + sum(inter)*paramInterGroupPercent + sum(large)*paramLargeGroupPercent 
 			+ sum(ind+small+inter+large)*0.10*paramCMPercent BilledAmount
 		,sum(small) Small, sum(inter) Inter, sum(Large) Large
 	from (
-		select bs.billingStudentId, bs.maxDaysPerMonth
+		select bs.billingStudentId, bs.maxDaysPerMonth, bs.AdjustedDaysPerMonth
 			,bsi.Attendance*IFNULL(IndPercent,0) as Ind
 			,bsi.Attendance*IFNULL(SmallPercent,0) as Small
 			,bsi.Attendance*IFNULL(InterPercent,0) as Inter
@@ -110,11 +111,11 @@ BEGIN
     #updateWithMonthMaxDaysPerMonth
 	update billingStudent
 		join (	select billingStudentId
-					, round(IFNULL(case when BilledAmount > maxDaysPerMonth
-													then maxDaysPerMonth
+					, round(IFNULL(case when BilledAmount > IFNULL(AdjustedDaysPerMonth, maxDaysPerMonth)
+													then IFNULL(AdjustedDaysPerMonth, maxDaysPerMonth)
 													else BilledAmount end,0),2) GeneratedBilledAmount
-					, round(IFNULL(case when BilledAmount > maxDaysPerMonth
-													 then BilledAmount - maxDaysPerMonth
+					, round(IFNULL(case when BilledAmount > IFNULL(AdjustedDaysPerMonth, maxDaysPerMonth)
+													 then BilledAmount - IFNULL(AdjustedDaysPerMonth, maxDaysPerMonth)
 													 else 0 end,0),2) GeneratedOverageAmount
 					, paramSmGroupPercent SmGroupPercent
 					, paramInterGroupPercent InterGroupPercent
@@ -123,10 +124,10 @@ BEGIN
 					#unfortunately, to date, no idea where this comes from but used
 					#only in ADM report and not in billing calculations
 					#taken directly from AEP MS Access system
-					, case when BilledAmount > maxDaysPerMonth
+					, round(case when BilledAmount > maxDaysPerMonth
 											then (maxDaysPerMonth -  (0.3497 * Small) - (0.2387 * Inter) - (0.1837 * Large)) / 1.0167
 											else NULL
-										end AdjustedIndHours
+										end,2) AdjustedIndHours
 				from sptmp_billingStudent) finalData
 			on billingStudent.billingStudentId = finalData.billingStudentId
 	set billingStudent.GeneratedBilledAmount  = finalData.GeneratedBilledAmount,
