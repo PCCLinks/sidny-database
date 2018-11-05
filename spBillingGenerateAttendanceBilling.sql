@@ -5,12 +5,50 @@ BEGIN
 	DECLARE paramBillingCycleId INT;
     DECLARE paramBillingReportId INT;
     DECLARE paramProgramYear varchar(25);
+    DECLARE paramMinBillingStartDate DATETIME;
+    DECLARE paramMaxBillingStartDate DATETIME;
+    DECLARE paramMinBillingCycleId INT;
     
     SELECT billingCycleId, ProgramYear INTO paramBillingCycleId, paramProgramYear
     FROM billingCycle
     WHERE billingStartDate = paramBillingStartDate
 		and billingType = 'Attendance';
+        
+	#check for split month
+    SELECT MIN(BillingStartDate), MAX(BillingStartDate)
+    INTO paramMinBillingStartDate, paramMaxBillingStartDate
+    FROM billingCycle
+    WHERE billingType = 'attendance'
+		and ProgramYear = paramProgramYear
+		and MONTH(BillingStartDate) = MONTH(paramBillingStartDate);
     
+    IF paramMinBillingStartDate < paramMaxBillingStartDate THEN
+		SELECT billingCycleID 
+        INTO paramMinBillingCycleId
+        FROM billingCycle
+		WHERE billingType = 'attendance'
+			and ProgramYear = paramProgramYear
+			and BillingStartDate = paramMinBillingStartDate;
+            
+        #set the main billingCycleID to the last one for the month    
+		SELECT billingCycleID, billingStartDate
+        INTO paramBillingCycleId, paramBillingStartDate
+        FROM billingCycle
+		WHERE billingType = 'attendance'
+			and ProgramYear = paramProgramYear
+			and BillingStartDate = paramMaxBillingStartDate;
+    
+		UPDATE billingCycle
+        SET endingAttendanceBillingCycleId = paramBillingCycleId
+        WHERE billingCycleId = paramMinBillingCycleId;
+        
+        UPDATE billingCycle
+        SET StartingAttendanceBillingCycleId =  paramMinBillingCycleId
+        WHERE billingCycleId = paramBillingCycleId;
+        
+        call spBillingUpdateAttendanceBilling(paramMinBillingStartDate, paramCreatedBy, 0);
+	END IF;
+		
     call spBillingUpdateAttendanceBilling(paramBillingStartDate, paramCreatedBy, 0);
             
 	INSERT INTO billingReport(billingCycleID, CreatedBy) VALUES(paramBillingCycleId, paramCreatedBy);

@@ -95,7 +95,7 @@ BEGIN
 		,bs.Program
 		,schooldistrict.schoolDistrict
 		,MIN(bs.billingStartDate) EntryDate
-		,bs.ExitDate
+		,bs.exitDateGroupBy
 		,SUM(case when cal.ProgramQuarter = 1 then bs.Credits else 0 end) SummerNoOfCredits
 		,SUM(case when cal.ProgramQuarter = 1 then bs.Days else 0 end) SummerNoOfDays
 		,SUM(case when cal.ProgramQuarter = 2 then bs.Credits+bs.CreditsOver else 0 end) FallNoOfCredits
@@ -116,15 +116,17 @@ BEGIN
 		,SUM(bs.Days+bs.DaysOver) + IFNULL(bsOther.Days,0) FYTotalNoOfDays
 		,CASE WHEN (SUM(bs.Days) + IFNULL(bsOther.Days,0)) > paramMaxDaysPerYear THEN paramMaxDaysPerYear ELSE (SUM(bs.Days) + IFNULL(bsOther.Days,0)) END FYMaxTotalNoOfDays
         ,paramCreatedBy
-	FROM (SELECT billingStudent.contactId, billingStudent.billingStudentId, firstname, lastname, billingStudent.bannerGNumber,
-				Term, DistrictID, Program, ExitDate, billingStartDate, billingEndDate, enrolledDate,
+	FROM (SELECT bsSub.contactId, bsSub.billingStudentId, firstname, lastname, bsSub.bannerGNumber,
+				Term, DistrictID, Program, ExitDate, 
+                (select min(exitDate) from billingStudent where billingStartDate >= bsSub.billingStartDate and bannerGNumber = bsSub.bannerGNumber) exitDateGroupBy,
+                billingStartDate, billingEndDate, enrolledDate,
 				GeneratedBilledUnits Credits,
 				GeneratedOverageUnits CreditsOver,
 				GeneratedBilledAmount Days,
 				GeneratedOverageAmount DaysOver
-			FROM billingStudent
-				JOIN billingStudentProfile bsp on billingStudent.contactId = bsp.contactId
-				join keySchoolDistrict schooldistrict on billingStudent.DistrictID = schooldistrict.keyschooldistrictid
+			FROM billingStudent bsSub
+				JOIN billingStudentProfile bsp on bsSub.contactId = bsp.contactId
+				join keySchoolDistrict schooldistrict on bsSub.DistrictID = schooldistrict.keyschooldistrictid
 			WHERE term in (select term from bannerCalendar where programYear = paramProgramYear)
 				and program not like '%attendance%'
                 and includeFlag = 1
@@ -144,7 +146,7 @@ BEGIN
 			ON bs.contactId = bsOther.contactId and bs.Program != bsOther.Program and bs.DistrictID = bsOther.DistrictID
 		join bannerCalendar cal on bs.term = cal.Term
 		join keySchoolDistrict schooldistrict on bs.DistrictID = schooldistrict.keyschooldistrictid
-	GROUP BY bs.firstname, bs.lastname, bs.exitDate, bs.bannergnumber
+	GROUP BY bs.firstname, bs.lastname, bs.exitDateGroupBy, bs.bannergnumber
 			,bs.Program
 			,schooldistrict.schoolDistrict
 			,bsOther.Days;

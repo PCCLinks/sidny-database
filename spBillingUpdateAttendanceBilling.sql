@@ -71,7 +71,8 @@ BEGIN
 	update billingStudent
 		join (select contactId, max(billingStartDate) billingStartDate, sum(maxDaysPerBillingPeriod) maxDaysPerMonth
 			  from billingStudent bsSub
-			  where bsSub.Program like '%attendance%'
+			  where bsSub.includeFlag = 1
+					and bsSub.Program like '%attendance%'
 					and MONTH(bsSub.billingStartDate) = MONTH(paramBillingStartDate)
 					and YEAR(bsSub.billingStartDate) = YEAR(paramBillingStartDate)
                     and (bsSub.contactId = paramContactId or paramContactId = 0)

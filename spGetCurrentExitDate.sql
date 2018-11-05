@@ -11,7 +11,7 @@ BEGIN
     
 	call spPopulateTmpEnrollExit(paramContactID);
     
-    select firstname, lastname, contact.bannerGNumber, enrolledDate, exitDate  
+    select firstname, lastname, contact.bannerGNumber, enrolledDate, exitDate, programDetail  
     from sptmp_CurrentEnrollExit ee
 		join contact on ee.contactID = contact.contactID;
 
