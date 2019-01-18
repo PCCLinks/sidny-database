@@ -5,8 +5,8 @@ BEGIN
 
 call spPopulateTmpEnrollExit(0);
 
-DROP TABLE IF EXISTS sptmp_eeData;
-CREATE TABLE sptmp_eeData
+DROP TEMPORARY TABLE IF EXISTS sptmp_eeData;
+CREATE TEMPORARY TABLE sptmp_eeData
 select py.ProgramYear
 	,py.ProgramYearBeginDate
     ,py.ProgramYearEndDate
