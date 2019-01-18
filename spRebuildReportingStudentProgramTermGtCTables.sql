@@ -7,10 +7,11 @@ call spPopulateTmpEnrollExit(0);
 
 DROP TEMPORARY TABLE IF EXISTS sptmp_eeData;
 CREATE TEMPORARY TABLE sptmp_eeData
-select py.ProgramYear
-	,py.Term
-	,py.TermBeginDate
-    ,py.TermEndDate
+select bc.ProgramYear
+	,bc.Term
+	,bc.TermBeginDate
+    ,bc.TermEndDate
+    ,bc.NextTermBeginDate
     ,max(ee.ID) maxID
     ,min(ee.ID) minID
 from sptmp_EnrollExit ee
@@ -138,3 +139,4 @@ SET IsNewStudent = (reporting.studentProgramTermGtC.Term = sptmp_minTerm.minTerm
 
 END//
 DELIMITER ;
+

@@ -224,4 +224,3 @@ SET IsNewStudent = (reporting.studentProgramTermYtC.Term = sptmp_minTerm.minTerm
     
 END//
 DELIMITER ;
-
