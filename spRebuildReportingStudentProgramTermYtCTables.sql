@@ -21,18 +21,38 @@ join bannerCalendar bc
 where ee.Program = 'YtC' #and ee.contactId = (select contactId from contact where BannerGNumber = 'G03970412')
 group by ee.contactID, ee.Program, bc.ProgramYear, bc.Term, bc.TermBeginDate, bc.TermEndDate, bc.NextTermBeginDate;
 
+#build Exit data - pass #1
+DROP TEMPORARY TABLE IF EXISTS sptmp_Exit1;
+CREATE TEMPORARY TABLE sptmp_Exit1
+select sptmp_eeData.maxID ID
+    ,sptmp_eeData.ProgramYear
+	,sptmp_eeData.Term
+	,CASE WHEN sptmp_EnrollExit.exitDate IS NULL THEN NULL
+ 		WHEN sptmp_EnrollExit.exitDate > sptmp_eeData.NextTermBeginDate THEN NULL
+        ELSE sptmp_EnrollExit.exitDate END termExitDate
+	,exitDate
+	,exitReason
+    ,secondaryReason
+    ,bc.TermEndDate
+    ,(select max(t.Term) from banner.swvlinks_term t join bannerCalendar bc on t.Term = bc.Term where t.stu_id = sptmp_EnrollExit.bannerGNumber and (sptmp_EnrollExit.exitDate >= bc.TermBeginDate or sptmp_EnrollExit.exitDate is null)) maxTerm
+from sptmp_eeData
+    join sptmp_EnrollExit on sptmp_eeData.maxID = sptmp_EnrollExit.ID
+    join bannerCalendar bc on sptmp_eeData.Term = bc.Term;
+
+#exit data - final pass - handles where the exit date is outside of the last term attended
+#in that case, sets the exit date to the ending date of the term
+#doing this, because only want to show terms where the student attendend class
 DROP TEMPORARY TABLE IF EXISTS sptmp_Exit;
 CREATE TEMPORARY TABLE sptmp_Exit
-select sptmp_eeData.maxID ID
-    , ProgramYear
-	, Term
-	, CASE WHEN sptmp_EnrollExit.exitDate IS NULL THEN NULL
-		WHEN sptmp_EnrollExit.exitDate > sptmp_eeData.NextTermBeginDate THEN NULL
-        ELSE sptmp_EnrollExit.exitDate END exitDate
-	, exitReason
-    , secondaryReason
-from sptmp_eeData
-    join sptmp_EnrollExit on sptmp_eeData.maxID = sptmp_EnrollExit.ID;
+SELECT ID
+	,ProgramYear
+    ,Term
+    ,CASE WHEN Term = maxTerm AND termExitDate is NULL and exitDate IS NOT NULL THEN TermEndDate
+		ELSE termExitDate END exitDate
+	 ,exitReason
+     ,secondaryReason
+FROM sptmp_Exit1
+WHERE Term <= maxTerm;
     
 CREATE INDEX idx_sptmp_Exit ON sptmp_Exit(ID);
 
