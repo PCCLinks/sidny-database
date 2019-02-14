@@ -37,12 +37,13 @@ BEGIN
 		, contact.emailPCC 'Email PCC'
 		, contact.emailAlt 'Email Alternate'
 		, tmpEnrollExit.schoolDistrict as 'School District During Timeframe' -- district during specified timeframe
-		, contact.ssid 'Student District Number'
+		, tmpEnrollExit.studentDistrictNumber 'Student District Number'
 		, date_format(tmpEnrollExit.enrolledDate,'%Y-%m-%d') as 'First Enroll Date Of Timeframe'
 		, tmpEnrollExit.ProgramDetail 'Program During Timeframe'
 		, tmpCurrentEnrollExit.CurrentStatus 'Current Status'    
 		, date_format(tmpCurrentEnrollExit.EnrolledDate,'%Y-%m-%d') as 'Current Enroll Date'
 		, date_format(tmpCurrentEnrollExit.exitDate,'%Y-%m-%d') as 'Current Exit Date'
+        , contact.lastHSAttended 'Last HS Attended'
 		from contact	
 			inner join  sptmp_EnrollExit tmpEnrollExit #get the first enrolled date per contact for the specified timeframe
 				on contact.contactId = tmpEnrollExit.contactId
@@ -52,5 +53,5 @@ BEGIN
 			inner join sptmp_CurrentEnrollExit tmpCurrentEnrollExit	
 				on contact.contactID = tmpCurrentEnrollExit.contactId;
 
-END$$
+END//
 DELIMITER ;

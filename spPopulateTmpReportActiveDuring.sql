@@ -44,7 +44,8 @@ BEGIN
         , tmpEnrollExit.Coach 'Coach During Timeframe'
 		, tmpCurrentEnrollExit.CurrentStatus 'Current Status'
 		, date_format(tmpCurrentEnrollExit.enrolledDate,'%Y-%m-%d') as 'Current Enroll Date' 
-		, date_format(tmpCurrentEnrollExit.exitDate,'%Y-%m-%d') as 'Current Exit Date' 
+		, date_format(tmpCurrentEnrollExit.exitDate,'%Y-%m-%d') as 'Current Exit Date'
+        , contact.lastHSAttended 'Last HS Attended'
 	from contact
 		join sptmp_EnrollExit tmpEnrollExit on contact.contactId = tmpEnrollExit.contactId
         join sptmp_LatestInRange
