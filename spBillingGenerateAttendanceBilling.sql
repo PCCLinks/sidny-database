@@ -8,11 +8,33 @@ BEGIN
     DECLARE paramMinBillingStartDate DATETIME;
     DECLARE paramMaxBillingStartDate DATETIME;
     DECLARE paramMinBillingCycleId INT;
+    DECLARE paramBillingStartDateLoop DATE;
     
     SELECT billingCycleId, ProgramYear INTO paramBillingCycleId, paramProgramYear
     FROM billingCycle
     WHERE billingStartDate = paramBillingStartDate
 		and billingType = 'Attendance';
+        
+
+	DROP TEMPORARY TABLE IF EXISTS sptmp_months;
+	CREATE TEMPORARY TABLE sptmp_months AS
+    SELECT TermBeginDate BillingStartDate
+    FROM bannerCalendar 
+    WHERE ProgramYear = paramProgramYear;
+    
+    SELECT min(BillingStartDate)
+		INTO paramBillingStartDateLoop
+	FROM sptmp_months;
+    
+    #rerun previous months to catch corrections
+    WHILE paramBillingStartDateLoop <= paramBillingStartDate DO
+		call spBillingUpdateAttendanceBilling(paramBillingStartDateLoop, paramCreatedBy, 0);
+        
+		SELECT min(billingStartDate)
+			INTO paramBillingStartDateLoop
+		FROM sptmp_months
+        WHERE BillingStartDate > paramBillingStartDateLoop;
+	END WHILE;
         
 	#check for split month
     SELECT MIN(BillingStartDate), MAX(BillingStartDate)
@@ -46,7 +68,7 @@ BEGIN
         SET StartingAttendanceBillingCycleId =  paramMinBillingCycleId
         WHERE billingCycleId = paramBillingCycleId;
         
-        call spBillingUpdateAttendanceBilling(paramMinBillingStartDate, paramCreatedBy, 0);
+        #call spBillingUpdateAttendanceBilling(paramMinBillingStartDate, paramCreatedBy, 0);
 	END IF;
 		
     call spBillingUpdateAttendanceBilling(paramBillingStartDate, paramCreatedBy, 0);

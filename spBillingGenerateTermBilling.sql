@@ -4,13 +4,13 @@ CREATE PROCEDURE spBillingGenerateTermBilling(paramTerm int(11), paramCreatedBy 
 BEGIN
 
 	DECLARE paramBillingCycleId INT;
-    DECLARE paramMaxCreditsPerYear INT;
-    DECLARE paramMaxDaysPerYear INT;
     DECLARE paramBillingReportID INT;
     DECLARE paramProgramYear varchar(25);
+    DECLARE paramMaxDaysPerYear INT;
+    DECLARE paramTermLoop INT;
     
-    SELECT billingCycleId,  MaxBillableCreditsPerTerm, MaxBillableDaysPerYear, ProgramYear
-		INTO paramBillingCycleId, paramMaxCreditsPerYear, paramMaxDaysPerYear, paramProgramYear
+    SELECT BillingCycleId, ProgramYear, MaxBillableDaysPerYear
+		INTO paramBillingCycleId, paramProgramYear, paramMaxDaysPerYear
     FROM billingCycle
     WHERE term = paramTerm
 		and billingType = 'Term';
@@ -19,42 +19,25 @@ BEGIN
     
     SET paramBillingReportId = last_insert_id();
 
-	update billingStudent bsToUpdate
-		join (
-			select bs.billingStudentId,
-				CASE WHEN creditYearTotal >= paramMaxCreditsPerYear
-					THEN CASE WHEN Overage < 0 THEN 0 Else Overage END
-					ELSE creditCurrentCycleTotal
-					END GeneratedBilledUnits,
-				creditCurrentCycleTotal -
-					(CASE WHEN creditYearTotal >= paramMaxCreditsPerYear
-						  THEN CASE WHEN Overage < 0 THEN 0 Else Overage END
-						  ELSE creditCurrentCycleTotal END)
-					GeneratedOverageUnits
-			from (select max(bsSub.billingStudentId) billingStudentId
-					,SUM(bsi.Credits) creditYearTotal
-					,SUM(CASE term WHEN paramTerm THEN bsi.Credits ELSE 0 END) creditCurrentCycleTotal
-					,paramMaxCreditsPerYear-(SUM(bsi.Credits) - SUM(CASE term WHEN paramTerm THEN bsi.Credits ELSE 0 END)) Overage
-				  from billingStudent bsSub
-					join billingStudentItem bsi on bsSub.BillingStudentID = bsi.BillingStudentID
-					join keySchoolDistrict schooldistrict on bsSub.DistrictID = schooldistrict.keyschooldistrictid
-					where bsi.includeFlag = 1 and bsSub.includeFlag = 1
-						and bsSub.Program not like '%attendance%'
-						and bsSub.term in (select term from bannerCalendar where ProgramYear = paramProgramYear)
-					group by bsSub.contactId) perStudentForYear
-				join billingStudent bs
-					on perStudentForYear.billingStudentId = bs.billingStudentId
-			where bs.term = paramTerm
-			)finalData
-			on bsToUpdate.billingStudentId = finalData.billingStudentId
-	set bsToUpdate.GeneratedOverageUnits = finalData.GeneratedOverageUnits,
-		bsToUpdate.GeneratedBilledUnits =  finalData.GeneratedBilledUnits,
-		bsToUpdate.GeneratedBilledAmount = ROUND(finalData.GeneratedBilledUnits /paramMaxCreditsPerYear*paramMaxDaysPerYear,4),
-		bsToUpdate.GeneratedOverageAmount = ROUND(finalData.GeneratedOverageUnits /paramMaxCreditsPerYear*paramMaxDaysPerYear,4),
-		bsToUpdate.maxCreditsPerTerm = paramMaxCreditsPerYear,
-		bsToUpdate.maxDaysPerYear = paramMaxDaysPerYear,
-        bsToUpdate.DateLastUpdated = now(),
-        bsToUpdate.LastUpdatedBy = paramCreatedBy;
+	DROP TEMPORARY TABLE IF EXISTS sptmp_terms;
+	CREATE TEMPORARY TABLE sptmp_terms AS
+    SELECT Term
+    FROM bannerCalendar 
+    WHERE ProgramYear = paramProgramYear;
+    
+    SELECT min(Term)
+		INTO paramTermLoop
+	FROM sptmp_terms;
+    
+    #rerun previous terms to catch corrections
+    WHILE paramTermLoop < paramTerm DO
+		call spBillingUpdateTermBilling(paramTermLoop, paramCreatedBy);
+        
+		SELECT min(Term)
+			INTO paramTermLoop
+		FROM sptmp_terms
+        WHERE Term > paramTermLoop;
+	END WHILE;
         
  	 INSERT INTO sidny.billingReportTerm
 		(	BillingReportId,
