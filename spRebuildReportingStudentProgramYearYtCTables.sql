@@ -158,12 +158,20 @@ group by contactId, bannerGNumber, ProgramYear, eeData.minTerm, eeData.maxTerm
 	,gedMapSocStudiesScore, gedMapScienceScore, gedMapMathScore
     ,gedMapLitScore, gedMapWritingScore,gedMapLanguageArtsScore;
 
-#created temporary table since need to reconnect below
+#created temporary table above since need to reconnect below
 DROP TABLE IF EXISTS reporting.studentProgramYearYtC;
 CREATE TABLE reporting.studentProgramYearYtC
 SELECT *
 	,CAST(NULL AS DECIMAL(10,2)) AS PostGEDGPA
     ,CAST(NULL AS DECIMAL(10,2)) AS PostGEDTermCount
+    ,CAST(NULL AS CHAR(100)) AS GENDER
+    ,CAST(NULL AS CHAR(100)) AS REP_RACE
+    ,CAST(NULL AS CHAR(100)) AS ASIAN
+    ,CAST(NULL AS CHAR(100)) AS NATIVE
+    ,CAST(NULL AS CHAR(100)) AS BLACK
+    ,CAST(NULL AS CHAR(100)) AS HISPANIC
+    ,CAST(NULL AS CHAR(100)) AS ISLANDER
+    ,CAST(NULL AS CHAR(100)) AS WHITE
 FROM sptmp_studentProgramYearYtC;
 
 UPDATE reporting.studentProgramYearYtC
@@ -187,5 +195,18 @@ UPDATE reporting.studentProgramYearYtC
 		on reporting.studentProgramYearYtC.ID = data.ID
 SET PostGEDGPA =  round(data.GEDPoints / data.credits,2)
 	, PostGEDTermCount  = data.NumberOfTerms;
+    
+UPDATE reporting.studentProgramYearYtC
+	JOIN banner.swvlinks_person on studentProgramYearYtC.bannerGNumber = swvlinks_person.stu_id
+SET studentProgramYearYtC.GENDER  = swvlinks_person.GENDER
+	,studentProgramYearYtC.REP_RACE  = swvlinks_person.REP_RACE
+	,studentProgramYearYtC.ASIAN  = swvlinks_person.ASIAN
+	,studentProgramYearYtC.NATIVE  = swvlinks_person.NATIVE
+	,studentProgramYearYtC.BLACK  = swvlinks_person.BLACK
+	,studentProgramYearYtC.HISPANIC  = swvlinks_person.HISPANIC
+	,studentProgramYearYtC.ISLANDER  = swvlinks_person.ISLANDER
+	,studentProgramYearYtC.WHITE  = swvlinks_person.WHITE;
+    
+    
 END//
 DELIMITER ;
