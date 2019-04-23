@@ -68,12 +68,12 @@ BEGIN
 		bsToUpdate.maxDaysPerYear = paramMaxDaysPerYear,
         bsToUpdate.DateLastUpdated = now(),
         bsToUpdate.LastUpdatedBy = paramCreatedBy
-	where bsToUpdate.GeneratedOverageUnits <> tmp.GeneratedOverageUnits
-		or bsToUpdate.GeneratedBilledUnits <> tmp.GeneratedBilledUnits
-		or bsToUpdate.GeneratedBilledAmount <> tmp.GeneratedBilledAmount
-		or bsToUpdate.GeneratedOverageAmount <> tmp.GeneratedOverageAmount
-		or bsToUpdate.maxCreditsPerTerm <> paramMaxCreditsPerYear
-		or bsToUpdate.maxDaysPerYear <> paramMaxDaysPerYear;
+	where IFNULL(bsToUpdate.GeneratedOverageUnits,0) <> IFNULL(tmp.GeneratedOverageUnits,0)
+		or IFNULL(bsToUpdate.GeneratedBilledUnits,0) <> IFNULL(tmp.GeneratedBilledUnits,0)
+		or IFNULL(bsToUpdate.GeneratedBilledAmount,0) <> IFNULL(tmp.GeneratedBilledAmount,0)
+		or IFNULL(bsToUpdate.GeneratedOverageAmount,0) <> IFNULL(tmp.GeneratedOverageAmount,0)
+		or IFNULL(bsToUpdate.maxCreditsPerTerm,0) <> paramMaxCreditsPerYear
+		or IFNULL(bsToUpdate.maxDaysPerYear,0) <> paramMaxDaysPerYear;
         
 END//
 DELIMITER ;

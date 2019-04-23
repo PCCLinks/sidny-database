@@ -9,6 +9,8 @@ BEGIN
     DECLARE paramMaxDaysPerYear INT;
     DECLARE paramTermLoop INT;
     
+    CALL spBillingUpdateTermBilling(paramTerm, paramCreatedBy);
+    
     SELECT BillingCycleId, ProgramYear, MaxBillableDaysPerYear
 		INTO paramBillingCycleId, paramProgramYear, paramMaxDaysPerYear
     FROM billingCycle
@@ -93,7 +95,7 @@ BEGIN
 		,SUM(case when cal.ProgramQuarter = 4 then bs.CreditsOver else 0 end) SpringNoOfCreditsOver
 		,SUM(case when cal.ProgramQuarter = 4 then bs.Days+bs.DaysOver else 0 end) SpringNoOfDays
 		,SUM(case when cal.ProgramQuarter = 4 then bs.DaysOver else 0 end) SpringNoOfDaysOver
-		,bsOther.Days OtherDaysBilled
+		,SUM(bsOther.Days) OtherDaysBilled
 		,SUM(bs.Credits+bs.CreditsOver) FYTotalNoOfCredits
 		,SUM(bs.Credits) FYMaxTotalNoOfCredits
 		,SUM(bs.Days+bs.DaysOver) + IFNULL(bsOther.Days,0) FYTotalNoOfDays
@@ -131,8 +133,7 @@ BEGIN
 		join keySchoolDistrict schooldistrict on bs.DistrictID = schooldistrict.keyschooldistrictid
 	GROUP BY bs.firstname, bs.lastname, bs.exitDateGroupBy, bs.bannergnumber
 			,bs.Program
-			,schooldistrict.schoolDistrict
-			,bsOther.Days;
+			,schooldistrict.schoolDistrict;
             
 	UPDATE billingCycle
     SET LatestBillingReportID = paramBillingReportId
